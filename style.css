@@ -1,0 +1,21 @@
+.container {
+    position: relative;
+    overflow: scroll;
+}
+
+svg {
+    transform: scale(0.1);
+}
+
+.round {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    display: block;
+    width: 40px;
+    height: 40px;
+    border: 1px solid rebeccapurple;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    color: red;
+}
