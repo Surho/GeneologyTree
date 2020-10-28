@@ -1,6 +1,10 @@
 import test from './testData.js';
 import getRandomColor from './utils/getRandomColor.js'
 
+const LAYER_RADIUS_STEP = 50,
+      RADIANS_K = 0.0174533;
+
+////////////////+
 function buildGenerationsSchema() {
     let generations = {};
     test.forEach((familyMember, i) => {
@@ -11,17 +15,34 @@ function buildGenerationsSchema() {
             generations[familyMember.anc] = [];
             generations[familyMember.anc].push(familyMember);
         }
-        // generations[familyMember.anc].generationNumber = familyMember.anc;
     });
     return generations;
 }
-
 const generations = buildGenerationsSchema();
-const LAYER_RADIUS_STEP = 50,
-      RADIANS_K = 0.0174533,
-      TOTAL_RADIUS = LAYER_RADIUS_STEP * Object.keys(generations).length;
+////////////////-
 
-console.log(generations);
+////////////////+
+function buildGenerationsObj(startPoint) {
+    startPoint.children = [];
+
+    if (startPoint.childrenId.length) {
+        startPoint.childrenId.forEach((childId) => {
+            let child = Object.values(test).filter((child) => {
+                return child.id === childId;
+            })[0];
+            startPoint.children.push(buildGenerationsObj(child));
+        });
+    } else {
+        return startPoint;
+    }
+    return startPoint;
+}
+
+const generetaionTree = buildGenerationsObj(test[0]);
+////////////////-
+
+////////////////+
+const TOTAL_RADIUS = LAYER_RADIUS_STEP * Object.keys(generations).length;
 
 function createVector(vector = 'svg', props) {
     let svgBoilerplate = document.createElementNS("http://www.w3.org/2000/svg", vector);
@@ -65,32 +86,6 @@ function createLine(x1, y1, x2, y2) {
     })
 }
 
-// totalRadius = LAYER_RADIUS_STEP * Object.keys(generations).length - LAYER_RADIUS_STEP;
-//
-//
-// let currentAngle = 0;
-// let startAngle = 360 * RADIANS_K;
-// console.log(Object.entries(generations));
-//
-// Object.entries(generations).forEach((item, i) => {
-//     if (typeof item == 'object' && item[1].length !== 1) {
-//         let sectorAngleStep = startAngle / item[1].length;
-//
-//         item[1].forEach((familyMember, i) => {
-//             let x1 = svg.parentNode.offsetWidth / 2 + LAYER_RADIUS_STEP * Math.cos(currentAngle),
-//                 y1 = svg.parentNode.offsetHeight / 2 - LAYER_RADIUS_STEP * Math.sin(currentAngle),
-//                 x2 = x1 + totalRadius * Math.cos(currentAngle),
-//                 y2 = y1 - totalRadius * Math.sin(currentAngle);
-//
-//             let line = createLine(x1, y1, x2, y2);
-//             line.setAttribute('data-index', i);
-//             svg.append(line);
-//             currentAngle += sectorAngleStep;
-//         });
-//         startAngle = startAngle / item[1].length;
-//     }
-// });
-
 function calculateLineCoords(radius, angle, offsetFromCenter) {
     angle = angle * RADIANS_K;
     let x1, y1, x2, y2,
@@ -113,31 +108,128 @@ function drawLine(lineCoords) {
 }
 
 function devideSector(startOffset, angleRange, sectorNumbers) {
-    if (sectorNumbers === 1) return;
+    if (sectorNumbers === 1 || sectorNumbers === 0) return;
 
     let [startAngle, endAngle] = [...angleRange],
-        partAngleStep = (Math.abs(angleRange[0] - angleRange[1])) / sectorNumbers;
+        partAngleStep = (Math.abs(startAngle - endAngle)) / sectorNumbers;
 
     for (let i = 0; i <= sectorNumbers; i++) {
-        let line = calculateLineCoords(TOTAL_RADIUS, i * partAngleStep, startOffset);
+        let line = calculateLineCoords(TOTAL_RADIUS, startAngle + (i * partAngleStep), startOffset);
         drawLine(line);
     }
 }
 
-// devideSector(LAYER_RADIUS_STEP, [180, 360], 3);
-
 let container = document.querySelector('.container');
-let currentRadius = TOTAL_RADIUS;
-let generationsReversed = Object.entries(generations).reverse();
+// let currentRadius = TOTAL_RADIUS;
+// let generationsReversed = Object.entries(generations).reverse();
 let svg = container.appendChild(createSvg());
+////////////////-
 
-generationsReversed.forEach((item, i) => {
-    let circle = createCircle('50%', '50%', currentRadius);
-    svg.appendChild(circle);
-    currentRadius -= LAYER_RADIUS_STEP;
-});
 
-generations.forEach((generation, i) => {
-   devideSector(LAYER_RADIUS_STEP, [])
-});
+////////////////+
+function buildGenerarionObjClean() {
+    let generatonMainBranches = {};
+        generatonMainBranches.children = [];
 
+    generetaionTree .children.forEach((item, i) => {
+         generatonMainBranches.children.push(item);
+    });
+    return generatonMainBranches;
+}
+
+let originChildrenArray = buildGenerarionObjClean();
+////////////////-
+
+
+
+////////////////+   1)
+
+// let originAncestor = test[0],
+//     originChildrenIds = originAncestor.childrenId,
+//     originChildren = test.filter(child => {
+//         if(originChildrenIds.indexOf(child.id) !== -1) return true;
+//     });
+//
+//     let originChildrenArray = [];
+//     originChildren.forEach((originChild, i) => {
+//         originChildrenArray.push(buildGenerationsObj(originChild));
+//     });
+////////////////-
+
+////////////////+   2)
+
+let sectorStart = 0,
+    sectorEnd = 360,
+    step = Math.abs(sectorEnd - sectorStart) / originChildrenArray.children.length;
+
+function mixInDiagramData(arr, sectorStart, sectorEnd, step) {
+    if (arr.children.length) {
+        arr.children.forEach((child, i) => {
+
+            child.sectorRange = [sectorStart, sectorStart + step];
+            sectorStart = child.sectorRange[1];
+            sectorEnd = sectorStart + step;
+
+            mixInDiagramData(child, ...child.sectorRange, Math.abs(sectorEnd - sectorStart) / child.children.length);
+        })
+    }
+}
+
+mixInDiagramData(originChildrenArray, sectorStart, sectorEnd, step);
+debugger;
+////////////////-
+
+
+// let mainBranches = buildGenerarionObjClean();
+// function goThrouth(start) {
+//     if (start.children.length) {
+//         start.children.forEach((item, i) => {
+//             console.log(item.children);
+//             goThrouth(item);
+//         })
+//     }
+// }
+// goThrouth(mainBranches);
+
+
+// let startAngle = 0,
+//     endAngle = 360,
+//     currentSector = [startAngle, endAngle],
+//     sectorStep = Math.abs(startAngle - endAngle),
+//     currentOffset = LAYER_RADIUS_STEP;
+
+// function devideCircle(startTree) {
+//
+//     debugger;
+//     if(startTree.children.length) {
+//        devideSector(currentOffset, currentSector, startTree.children.length);
+//
+//        sectorStep = endAngle / startTree.children.length;
+//        [startAngle, endAngle] = [endAngle, startAngle + sectorStep];
+//        currentSector = [startAngle, endAngle];
+//        currentOffset += LAYER_RADIUS_STEP;
+//
+//        startTree.children.forEach((branch, i) => {
+//            devideCircle(branch);
+//        })
+//     }
+// }
+//
+// devideCircle(generetaionTree);
+
+// devideSector(0, [45, 360], 40);
+
+;
+
+// //1
+// devideSector(LAYER_RADIUS_STEP, [0, 360], generetaionTree.children.length)
+//
+// //2
+// devideSector(LAYER_RADIUS_STEP * 2, [0, 90], generetaionTree.children[0].children.length);
+// devideSector(LAYER_RADIUS_STEP * 2, [90, 180], generetaionTree.children[1].children.length);
+// devideSector(LAYER_RADIUS_STEP * 2, [180, 270], generetaionTree.children[2].children.length);
+// devideSector(LAYER_RADIUS_STEP * 2, [270, 360], generetaionTree.children[3].children.length);
+//
+// //2-1
+// devideSector(LAYER_RADIUS_STEP * 3, [0, 45], generetaionTree.children[0].children[0].children.length);
+// devideSector(LAYER_RADIUS_STEP * 3, [0, 45], generetaionTree.children[1].children[0].children.length);

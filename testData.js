@@ -1,4 +1,5 @@
 export default [
+    //////////////-INITIAL ANCESTOR-/////////////
     {
         id: 0,
         anc: null,
@@ -6,6 +7,7 @@ export default [
         spouse: "Emily Tacker",
         childrenId: [1, 2, 3, 4]
     },
+    ///////////////////-1-GEN-///////////////////
     {
         id: 1,
         anc: 0,
@@ -23,7 +25,7 @@ export default [
     {
         id: 3,
         anc: 0,
-        name: "Bob Barner",
+        name: "Bob Barner 2",
         spouse: "Alisha Freck",
         childrenId: [8, 9, 10, 11, 12, 13]
     },
@@ -34,6 +36,7 @@ export default [
         spouse: "Asa Freck",
         childrenId: [14, 15, 16]
     },
+    ///////////////////-2-GEN-///////////////////
     {
         id: 5,
         anc: 1,
@@ -95,7 +98,7 @@ export default [
         anc: 3,
         name: "Jack Barner",
         spouse: "Lolita Karver",
-        childrenId: []
+        childrenId: [17, 18]
     },
     {
         id: 14,
@@ -116,6 +119,64 @@ export default [
         anc: 4,
         name: "Gerbert Barner",
         spouse: "Letti Dominic",
+        childrenId: []
+    },
+    ///////////////////-3-GEN-///////////////////
+    {
+        id: 17,
+        anc: 13,
+        name: "oh-hui boi",
+        spouse: "yokira mattamotto",
+        childrenId: []
+    },
+    {
+        id: 18,
+        anc: 13,
+        name: "Sen-Pai Joshua",
+        spouse: "Alister Overeem",
+        childrenId: [20]
+    },
+    {
+        id: 20,
+        anc: 18,
+        name: "Jemy Lannister",
+        spouse: "Sersei Lannister",
+        childrenId: [322, 876, 877, 1023, 25]
+    },
+    // ///////////////////-4-GEN-///////////////////
+    {
+        id: 322,
+        anc: 18,
+        name: "Yokai",
+        spouse: "Maiden",
+        childrenId: []
+    },
+    {
+        id: 876,
+        anc: 18,
+        name: "Jocsh The Saint",
+        spouse: "Ave Maria",
+        childrenId: []
+    },
+    {
+        id: 877,
+        anc: 18,
+        name: "Richard Lion Heart",
+        spouse: "Lilith Mouse Heart",
+        childrenId: []
+    },
+    {
+        id: 1023,
+        anc: 18,
+        name: "Jack Daniels",
+        spouse: "Tila Tequila",
+        childrenId: []
+    },
+    {
+        id: 25,
+        anc: 18,
+        name: "Dart Vaider",
+        spouse: "Lia",
         childrenId: []
     },
 ]
