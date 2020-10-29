@@ -163,17 +163,19 @@ function mixInDiagramData(arr, sectorStart, sectorEnd, step, generationLayer) {
         arr.children.forEach((child, i) => {
 
             child.sectorRange = [sectorStart, sectorStart + step];
-            child.ganerationlayer = generationLayer;
+            child.generationLayer = generationLayer;
 
             sectorStart = child.sectorRange[1];
             sectorEnd = sectorStart + step;
 
-            mixInDiagramData(child, ...child.sectorRange, Math.abs(sectorEnd - sectorStart) / child.children.length, child.layer + 1);
+            let nextLayer = child.generationLayer + 1;
+
+            mixInDiagramData(child, ...child.sectorRange, Math.abs(sectorEnd - sectorStart) / child.children.length, nextLayer);
         })
     }
 }
 
-mixInDiagramData(originChildrenArray, sectorStart, sectorEnd, step, 1);
+mixInDiagramData(originChildrenArray, sectorStart, sectorEnd, step, 0);
 
 
 console.log(originChildrenArray);
@@ -194,29 +196,19 @@ generationsReversed.forEach((generation, i) => {
     svg.append(circle);
 });
 
-function markCircleSector(sector) {
+function markChildren(children) {
+    if (children.length) {
+        children.forEach((child, i) => {
+            let currentOffset = LAYER_RADIUS_STEP + LAYER_RADIUS_STEP * child.generationLayer,
+                line1Coords = calculateLineCoords(biggestRadius, child.sectorRange[0], currentOffset),
+                line2Coords = calculateLineCoords(biggestRadius, child.sectorRange[1], currentOffset);
 
-}
+            drawLine(line1Coords);
+            drawLine(line2Coords);
 
-function goThroughObject(obj) {
-    if(obj.length) {
-        Object.values(obj).forEach((item) => {
-            console.log(item);
-            goThroughObject(item.children);
+            markChildren(child.children);
         })
     }
 }
 
-// goThroughObjectfunction markChildren(children) {
-//     if (children.length) {
-//         children.forEach((child, i) => {
-//             // let currentRadius = LAYER_RADIUS_STEP + LAYER_RADIUS_STEP * child.generationLayer;
-//             // console.log(currentRadius);
-//             console.log(child);
-//             markChildren(child.children);
-//         })
-//     }
-// }
-//
-//
-// markChildren(originChildrenArray.children);
+markChildren(originChildrenArray.children);
