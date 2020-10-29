@@ -207,4 +207,16 @@ function goThroughObject(obj) {
     }
 }
 
-// goThroughObject(originChildrenArray.children);
+// goThroughObjectfunction markChildren(children) {
+//     if (children.length) {
+//         children.forEach((child, i) => {
+//             // let currentRadius = LAYER_RADIUS_STEP + LAYER_RADIUS_STEP * child.generationLayer;
+//             // console.log(currentRadius);
+//             console.log(child);
+//             markChildren(child.children);
+//         })
+//     }
+// }
+//
+//
+// markChildren(originChildrenArray.children);
