@@ -1,4 +1,5 @@
 import test from './testData.js';
+import roundTo from './utils/rountTo.js'
 import getRandomColor from './utils/getRandomColor.js'
 
 const LAYER_RADIUS_STEP = 50,
@@ -50,6 +51,7 @@ function createVector(vector = 'svg', props) {
     if(vector === 'svg') {
         svgBoilerplate.setAttribute('version', '1.1');
         svgBoilerplate.setAttribute('baseProfile', 'full');
+        svgBoilerplate.setAttribute('shape-rendering', 'auto');
     }
 
     Object.entries(props).forEach((entry) => {
@@ -75,6 +77,14 @@ function createCircle(cx, cy, r) {
     });
 }
 
+function createPath(path) {
+    return createVector('path', {
+        d: path,
+        fill: 'blue',
+        stroke: 'red'
+    })
+}
+
 function createLine(x1, y1, x2, y2) {
     return createVector('line', {
         x1: x1,
@@ -94,10 +104,10 @@ function calculateLineCoords(radius, angle, offsetFromCenter) {
             y: svg.parentNode.offsetHeight / 2
         };
 
-    x1 = svgCenter.x + offsetFromCenter * Math.cos(angle);
-    y1 = svgCenter.y - offsetFromCenter * Math.sin(angle);
-    x2 = x1 + (radius - offsetFromCenter) * Math.cos(angle);
-    y2 = y1 - (radius - offsetFromCenter) * Math.sin(angle);
+    x1 = roundTo(svgCenter.x + offsetFromCenter * Math.cos(angle), 1);
+    y1 = roundTo(svgCenter.y - offsetFromCenter * Math.sin(angle), 1);
+    x2 = roundTo(x1 + (radius - offsetFromCenter) * Math.cos(angle),1);
+    y2 = roundTo(y1 - (radius - offsetFromCenter) * Math.sin(angle), 1);
 
     return [x1, y1, x2, y2];
 }
@@ -196,6 +206,9 @@ generationsReversed.forEach((generation, i) => {
     svg.append(circle);
 });
 
+let lineCache = new Set();
+let count = 0;
+
 function markChildren(children) {
     if (children.length) {
         children.forEach((child, i) => {
@@ -203,12 +216,32 @@ function markChildren(children) {
                 line1Coords = calculateLineCoords(biggestRadius, child.sectorRange[0], currentOffset),
                 line2Coords = calculateLineCoords(biggestRadius, child.sectorRange[1], currentOffset);
 
-            drawLine(line1Coords);
-            drawLine(line2Coords);
+            console.log(line1Coords);
+            console.log(line2Coords);
+            console.log('----------------');
+
+            let line1UID = `${line1Coords[0]}${line1Coords[1]}${line1Coords[2]}${line1Coords[3]}`,
+                line2UID = `${line2Coords[0]}${line2Coords[1]}${line2Coords[2]}${line2Coords[3]}`;
+
+                if(!lineCache.has(line1UID)) drawLine(line1Coords);
+                if(!lineCache.has(line2UID)) drawLine(line2Coords);
+
+            lineCache.add(line1UID);
+            lineCache.add(line2UID);
 
             markChildren(child.children);
         })
     }
 }
-
 markChildren(originChildrenArray.children);
+
+svg.append(createPath(`
+    M 476, 500
+    A 50 50 0 0 0 425.9 450
+    L 425.9 400
+    A 100 100 0 0 1 524 500
+`));
+
+
+
+
