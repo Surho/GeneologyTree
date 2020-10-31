@@ -42,7 +42,7 @@ export default [
         anc: 1,
         name: "Garner Barner",
         spouse: "Asaakira Freck",
-        childrenId: []
+        childrenId: [666, 777]
     },
     {
         id: 6,
@@ -175,6 +175,20 @@ export default [
     {
         id: 25,
         anc: 18,
+        name: "Dart Vaider",
+        spouse: "Lia",
+        childrenId: []
+    },
+    {
+        id: 666,
+        anc: 5,
+        name: "Jack Daniels",
+        spouse: "Tila Tequila",
+        childrenId: []
+    },
+    {
+        id: 777,
+        anc: 5,
         name: "Dart Vaider",
         spouse: "Lia",
         childrenId: []

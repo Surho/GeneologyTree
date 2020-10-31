@@ -3,7 +3,8 @@ import roundTo from './utils/rountTo.js'
 import getRandomColor from './utils/getRandomColor.js'
 
 const LAYER_RADIUS_STEP = 50,
-      RADIANS_K = 0.0174533;
+      RADIANS_K = 0.0174533,
+      BASE_HSL = [0, 50, 70];
 
 ////////////////+
 function buildGenerationsSchema() {
@@ -58,6 +59,11 @@ function createVector(vector = 'svg', props) {
         let [name, value] = [...entry];
         svgBoilerplate.setAttribute(name, value);
     });
+    // let group = document.createElement('g');
+    // if(vector !== 'svg') {
+    //     group.append(svgBoilerplate);
+    // }
+    // return (vector !== 'svg') ? group : svgBoilerplate;
     return svgBoilerplate;
 }
 
@@ -80,7 +86,7 @@ function createCircle(cx, cy, r) {
 function createPath(path) {
     return createVector('path', {
         d: path,
-        fill: 'blue',
+        fill: getRandomColor(),
         stroke: 'red'
     })
 }
@@ -96,7 +102,7 @@ function createLine(x1, y1, x2, y2) {
     })
 }
 
-function calculateLineCoords(radius, angle, offsetFromCenter) {
+function calculateLineCoords(angle, offsetFromCenter) {
     angle = angle * RADIANS_K;
     let x1, y1, x2, y2,
         svgCenter = {
@@ -104,17 +110,17 @@ function calculateLineCoords(radius, angle, offsetFromCenter) {
             y: svg.parentNode.offsetHeight / 2
         };
 
-    x1 = roundTo(svgCenter.x + offsetFromCenter * Math.cos(angle), 1);
-    y1 = roundTo(svgCenter.y - offsetFromCenter * Math.sin(angle), 1);
-    x2 = roundTo(x1 + (radius - offsetFromCenter) * Math.cos(angle),1);
-    y2 = roundTo(y1 - (radius - offsetFromCenter) * Math.sin(angle), 1);
+    x1 = svgCenter.x + offsetFromCenter * Math.cos(angle),
+    y1 = svgCenter.y - offsetFromCenter * Math.sin(angle),
+    x2 = x1 + LAYER_RADIUS_STEP * Math.cos(angle),
+    y2 = y1 - LAYER_RADIUS_STEP * Math.sin(angle);
 
-    return [x1, y1, x2, y2];
+    return {x1, y1, x2, y2};
 }
 
-function drawLine(lineCoords) {
-    let line = createLine(...lineCoords);
-    svg.append(line);
+function drawLine(line) {
+    let lineCoords = createLine(line.x1, line.y1, line.x2, line.y2);
+    svg.append(lineCoords);
 }
 
 function devideSector(startOffset, angleRange, sectorNumbers) {
@@ -124,7 +130,7 @@ function devideSector(startOffset, angleRange, sectorNumbers) {
         partAngleStep = (Math.abs(startAngle - endAngle)) / sectorNumbers;
 
     for (let i = 0; i <= sectorNumbers; i++) {
-        let line = calculateLineCoords(TOTAL_RADIUS, startAngle + (i * partAngleStep), startOffset);
+        let line = calculateLineCoords(startAngle + (i * partAngleStep), startOffset);
         drawLine(line);
     }
 }
@@ -174,6 +180,12 @@ function mixInDiagramData(arr, sectorStart, sectorEnd, step, generationLayer) {
 
             child.sectorRange = [sectorStart, sectorStart + step];
             child.generationLayer = generationLayer;
+            child.radiusRange = [];
+            child.radiusRange[0] =(child.generationLayer === 0)
+                                        ? LAYER_RADIUS_STEP
+                                        : LAYER_RADIUS_STEP+ LAYER_RADIUS_STEP * child.generationLayer;
+            child.radiusRange[1] = child.radiusRange[0] + LAYER_RADIUS_STEP;
+
 
             sectorStart = child.sectorRange[1];
             sectorEnd = sectorStart + step;
@@ -193,54 +205,46 @@ console.log(originChildrenArray);
 ////////////////-
 
 
+////////////////+
+function drawSector(radius1, radius2, line1, line2) {
+    let path = `
+        M ${line1.x1} ${line1.y1}
+        A ${radius1} ${radius1} 0 0 0 ${line2.x1} ${line2.y1}
+        L ${line2.x1} ${line2.y1} ${line2.x2} ${line2.y2}
+        A ${radius2} ${radius2} 0 0 1 ${line1.x2} ${line1.y2}
+        L ${line1.x2} ${line1.y2} ${line1.x1} ${line1.y1}
+        `;
+
+    svg.append(createPath(path));
+}
+////////////////-
+
 let container = document.querySelector('.container'),
     generationsReversed = Object.entries(generations).reverse(),
     biggestRadius = LAYER_RADIUS_STEP * generationsReversed.length,
     svg = container.appendChild(createSvg());
 
-generationsReversed.forEach((generation, i) => {
-    let radiusDiff = i * LAYER_RADIUS_STEP,
-        newRadius = biggestRadius - radiusDiff;
-
-    let circle = createCircle('50%', '50%', newRadius);
-    svg.append(circle);
-});
-
-let lineCache = new Set();
-let count = 0;
-
 function markChildren(children) {
     if (children.length) {
         children.forEach((child, i) => {
             let currentOffset = LAYER_RADIUS_STEP + LAYER_RADIUS_STEP * child.generationLayer,
-                line1Coords = calculateLineCoords(biggestRadius, child.sectorRange[0], currentOffset),
-                line2Coords = calculateLineCoords(biggestRadius, child.sectorRange[1], currentOffset);
+                line1Coords = calculateLineCoords(child.sectorRange[0], currentOffset),
+                line2Coords = calculateLineCoords(child.sectorRange[1], currentOffset);
 
-            console.log(line1Coords);
-            console.log(line2Coords);
-            console.log('----------------');
+                drawSector(child.radiusRange[0], child.radiusRange[1],line1Coords, line2Coords);
 
-            let line1UID = `${line1Coords[0]}${line1Coords[1]}${line1Coords[2]}${line1Coords[3]}`,
-                line2UID = `${line2Coords[0]}${line2Coords[1]}${line2Coords[2]}${line2Coords[3]}`;
-
-                if(!lineCache.has(line1UID)) drawLine(line1Coords);
-                if(!lineCache.has(line2UID)) drawLine(line2Coords);
-
-            lineCache.add(line1UID);
-            lineCache.add(line2UID);
-
+            // drawSector()
             markChildren(child.children);
         })
     }
 }
 markChildren(originChildrenArray.children);
 
-svg.append(createPath(`
-    M 476, 500
-    A 50 50 0 0 0 425.9 450
-    L 425.9 400
-    A 100 100 0 0 1 524 500
-`));
+
+// drawSector(50,20, 20, 40, 40);
+//
+
+console.log(originChildrenArray);
 
 
 
